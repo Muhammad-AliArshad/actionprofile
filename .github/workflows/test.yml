@@ -1,18 +1,49 @@
-name: Test Workflow
+name: Install React, MUI & React Icons
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  test:
+  install-deps:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Say Hello
-        run: echo "Hello from GitHub Actions!"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Show date
-        run: date
+      - name: Create React App
+        run: npx create-react-app my-app --template typescript
+
+      - name: Install MUI
+        working-directory: my-app
+        run: npm install @mui/material @emotion/react @emotion/styled
+
+      - name: Install MUI Icons
+        working-directory: my-app
+        run: npm install @mui/icons-material
+
+      - name: Install React Icons
+        working-directory: my-app
+        run: npm install react-icons
+
+      - name: Verify installations
+        working-directory: my-app
+        run: |
+          echo "=== Installed packages ==="
+          npm list @mui/material @mui/icons-material react-icons --depth=0
+
+      - name: Build project
+        working-directory: my-app
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: my-app/build/
