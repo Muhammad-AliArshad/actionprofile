@@ -1,49 +1,58 @@
-name: Install React, MUI & React Icons
+name: React CI Pipeline
 
 on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
-  install-deps:
+  build:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repo
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Setup Node
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Create React App
-        run: npx create-react-app my-app --template typescript
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm install
 
-      - name: Install MUI
-        working-directory: my-app
-        run: npm install @mui/material @emotion/react @emotion/styled
+      # 4. 🔐 Security Scan (Dependency Audit)
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
 
-      - name: Install MUI Icons
-        working-directory: my-app
-        run: npm install @mui/icons-material
+      # 5. Install extra libs (only if NOT in package.json)
+      - name: Install MUI & Icons
+        run: |
+          npm install @mui/material @emotion/react @emotion/styled
+          npm install @mui/icons-material
+          npm install react-icons
 
-      - name: Install React Icons
-        working-directory: my-app
-        run: npm install react-icons
-
-      - name: Verify installations
-        working-directory: my-app
+      # 6. Verify packages
+      - name: Verify packages
         run: |
           echo "=== Installed packages ==="
           npm list @mui/material @mui/icons-material react-icons --depth=0
 
+      # 7. Build project
       - name: Build project
-        working-directory: my-app
+        if: success()
         run: npm run build
 
+      # 8. Upload artifact
       - name: Upload build artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: react-build
-          path: my-app/build/
+          path: build/
